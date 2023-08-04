@@ -99,3 +99,36 @@ if __name__ == "__main__":
 
     resample_images_to_reference(ref_img_path, target_img_path, output_img_path)
 
+
+
+
+#############
+import nibabel as nib
+import numpy as np
+
+def normalize_intensity(image_data, new_min, new_max):
+    old_min, old_max = np.min(image_data), np.max(image_data)
+    normalized_data = (image_data - old_min) * ((new_max - new_min) / (old_max - old_min)) + new_min
+    return normalized_data
+
+def main():
+    # Chemin du fichier nii.gz
+    input_file = '/Users/salimrami/Desktop/sub/sub1/sub1_T2w.nii.gz'
+    output_file = '/Users/salimrami/Desktop/sub/sub1/sub1_T2wized.nii.gz'
+
+    # Charger l'image
+    img = nib.load(input_file)
+    img_data = img.get_fdata()
+
+    # Normaliser les intensités entre 0 et 40
+    normalized_data = normalize_intensity(img_data, 0, 20)
+
+    # Créer une nouvelle image NIfTI avec les données normalisées
+    normalized_img = nib.Nifti1Image(normalized_data, img.affine, img.header)
+
+    # Sauvegarder l'image normalisée au format nii.gz
+    nib.save(normalized_img, output_file)
+
+if __name__ == "__main__":
+    main()
+
