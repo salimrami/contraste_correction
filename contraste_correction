@@ -18,7 +18,7 @@ def contrast_correction(reference_image_data, low_res_image_data):
 
     return scaled_low_res_image
 
-# Load the reference image and low-resolution image using nibabel
+# Load the reference image(dhcp) and low-resolution (fetal)image using nibabel
 reference_image_path = "/Users/salimrami/Desktop/test processing/ddhcp.nii.gz"
 low_res_image_path = "/Users/salimrami/Desktop/test processing/fetall.nii.gz"
 
@@ -38,7 +38,7 @@ resampled_low_res_image_data = zoom(low_res_image_data, scaling_factors)
 # Call the contrast correction function
 corrected_low_res_image_data = contrast_correction(reference_image_data, resampled_low_res_image_data)
 
-# Save the corrected image as a new NIfTI file (if needed)
+# Save the corrected image 
 corrected_low_res_nifti = nib.Nifti1Image(corrected_low_res_image_data, reference_image_nifti.affine)
 nib.save(corrected_low_res_nifti, "/Users/salimrami/Desktop/test processing/ssub1_T2w.nii.gz")
 
