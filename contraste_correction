@@ -1,0 +1,101 @@
+import nibabel as nib
+import numpy as np
+from scipy.ndimage import gaussian_filter
+from scipy.ndimage import zoom
+
+def contrast_correction(reference_image_data, low_res_image_data):
+    # Add a small epsilon value to avoid division by zero
+    epsilon = 1e-8
+    denominator = reference_image_data + epsilon
+
+    # Perform Gaussian low-pass filtering on the relative scaling factor
+    scaling_factor = low_res_image_data / denominator
+    filtered_scaling_factor = gaussian_filter(scaling_factor, sigma=1.0)
+
+    # Keep the mean value of the low-resolution image unchanged
+    mean_scaling_factor = np.mean(filtered_scaling_factor)
+    scaled_low_res_image = low_res_image_data / mean_scaling_factor
+
+    return scaled_low_res_image
+
+# Load the reference image and low-resolution image using nibabel
+reference_image_path = "/Users/salimrami/Desktop/test processing/ddhcp.nii.gz"
+low_res_image_path = "/Users/salimrami/Desktop/test processing/fetall.nii.gz"
+
+reference_image_nifti = nib.load(reference_image_path)
+low_res_image_nifti = nib.load(low_res_image_path)
+
+# Get the image data as NumPy arrays
+reference_image_data = reference_image_nifti.get_fdata()
+low_res_image_data = low_res_image_nifti.get_fdata()
+
+# Calculate the scaling factors along each axis
+scaling_factors = [ref_dim / low_dim for ref_dim, low_dim in zip(reference_image_data.shape, low_res_image_data.shape)]
+
+# Resample the low-resolution image to match the dimensions of the reference image
+resampled_low_res_image_data = zoom(low_res_image_data, scaling_factors)
+
+# Call the contrast correction function
+corrected_low_res_image_data = contrast_correction(reference_image_data, resampled_low_res_image_data)
+
+# Save the corrected image as a new NIfTI file (if needed)
+corrected_low_res_nifti = nib.Nifti1Image(corrected_low_res_image_data, reference_image_nifti.affine)
+nib.save(corrected_low_res_nifti, "/Users/salimrami/Desktop/test processing/ssub1_T2w.nii.gz")
+
+
+############
+
+import nibabel as nib
+from skimage.transform import resize
+
+def resize_image(input_path, output_path, new_shape):
+    # Charger l'image volumique à partir du chemin d'entrée
+    image = nib.load(input_path)
+    data = image.get_fdata()
+
+    # Redimensionner l'image volumique en utilisant scikit-image
+    resized_data = resize(data, new_shape, order=1, mode='constant', anti_aliasing=False)
+
+    # Créer un nouvel objet NIfTI avec les données redimensionnées
+    resized_image = nib.Nifti1Image(resized_data, image.affine, image.header)
+
+    # Sauvegarder l'image redimensionnée dans le chemin de sortie
+    nib.save(resized_image, output_path)
+
+# Exemple d'utilisation
+input_image_path = "/Users/salimrami/Desktop/seg/l-seg.nii.gz"
+output_image_path = "/Users/salimrami/Desktop/seg/ll-seg.nii.gz"
+new_shape = (217, 290, 290)
+
+resize_image(input_image_path, output_image_path, new_shape)
+
+
+############
+import nibabel as nib
+
+def resample_images_to_reference(ref_img_path, target_img_path, output_img_path):
+    # Charger les images NIfTI
+    ref_img = nib.load(ref_img_path)
+    target_img = nib.load(target_img_path)
+
+    # Récupérer les données des images et les informations d'espacement
+    ref_data = ref_img.get_fdata()
+    ref_affine = ref_img.affine
+
+    target_data = target_img.get_fdata()
+    target_affine = target_img.affine
+
+    # Ramener l'image cible dans le même espace que l'image de référence
+    target_resampled = nib.Nifti1Image(target_data, ref_affine)
+
+    # Sauvegarder l'image ramenée dans le même espace
+    nib.save(target_resampled, output_img_path)
+
+# Exemple d'utilisation
+if __name__ == "__main__":
+    ref_img_path = "/Users/salimrami/Desktop/seg/rr-seg.nii.gz"
+    target_img_path = "/Users/salimrami/Desktop/fetus_data/sub1_T2w.nii.gz"
+    output_img_path = "/Users/salimrami/Desktop/fetus_data/sub1_T2w_resampled.nii.gz"
+
+    resample_images_to_reference(ref_img_path, target_img_path, output_img_path)
+
